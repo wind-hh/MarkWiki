@@ -1,5 +1,12 @@
 <template>
   <aside class="sidebar">
+    <ConfirmDialog
+      :visible="confirmDialog.visible"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      @close="confirmDialog.visible = false"
+      @confirm="handleConfirm"
+    />
   <CreateWikiModal
     :visible="isCreateWikiModalVisible"
     @close="closeCreateWikiModal"
@@ -175,6 +182,7 @@ import { useRouter } from 'vue-router';
 import { invoke } from "@tauri-apps/api/core";
 import FileTreeNode from './FileTreeNode.vue';
 import CreateWikiModal from './CreateWikiModal.vue';
+import ConfirmDialog from './ConfirmDialog.vue';
 
 // 定义知识库类型
 interface Wiki {
@@ -323,6 +331,14 @@ const selectedWikiName = ref<string | null>(null);
 const expandedWikiName = ref<string | null>(null);
 const router = useRouter();
 
+// 确认对话框状态
+const confirmDialog = ref({
+  visible: false,
+  title: '',
+  message: '',
+  callback: null as Function | null
+});
+
 // 存储每个文件夹的展开状态
 const folderExpandedStates: Ref<Record<string, boolean>> = ref({});
 
@@ -403,9 +419,82 @@ const syncWiki = (wikiName: string) => {
   alert(`同步知识库 ${wikiName} 功能将在后续实现`);
 };
 
+// 处理确认操作
+const handleConfirm = () => {
+  if (confirmDialog.value.callback) {
+    confirmDialog.value.callback();
+    confirmDialog.value.callback = null;
+  }
+  confirmDialog.value.visible = false;
+};
+
 const setupRemoteRepo = (wikiName: string) => {
-  // 这里将在后续实现设置远程仓库的逻辑
-  alert(`设置知识库 ${wikiName} 远程仓库功能将在后续实现`);
+  // 显示自定义确认对话框
+  confirmDialog.value = {
+    visible: true,
+    title: '设置远程仓库',
+    message: `是否设置知识库 "${wikiName}" 的远程仓库？`,
+    callback: () => {
+        // 这里将在后续实现设置远程仓库的逻辑
+        // 创建应用内风格的提示框
+        const alertOverlay = document.createElement('div');
+        alertOverlay.className = 'custom-alert-overlay';
+        alertOverlay.innerHTML = `
+          <div class="custom-alert-container">
+            <p class="custom-alert-message">设置知识库 ${wikiName} 远程仓库功能将在后续实现</p>
+            <div class="custom-alert-button">OK</div>
+          </div>
+        `;
+        
+        // 添加样式
+        const style = document.createElement('style');
+        style.textContent = `
+          .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+          }
+          .custom-alert-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            text-align: center;
+          }
+          .custom-alert-message {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 16px;
+          }
+          .custom-alert-button {
+            color: #9333ea; /* 紫色 */
+            font-size: 14px;
+            text-align: right;
+            cursor: pointer;
+            padding: 4px 0;
+          }
+        `;
+        
+        document.body.appendChild(style);
+        document.body.appendChild(alertOverlay);
+        
+        // 点击OK关闭
+        const button = alertOverlay.querySelector('.custom-alert-button');
+        button?.addEventListener('click', () => {
+          document.body.removeChild(alertOverlay);
+          document.body.removeChild(style);
+        });
+      }
+  };
 };
 
 const deleteWiki = (wikiName: string) => {
