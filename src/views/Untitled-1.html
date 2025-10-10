@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>设置知识库远程仓库</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色和字体，匹配应用内风格 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6', // 应用主色调
+            secondary: '#64748b', // 次要颜色
+            neutral: '#f1f5f9', // 中性色
+            dark: '#1e293b', // 深色
+            success: '#10b981', // 成功色
+            danger: '#ef4444', // 错误色
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .form-input-focus {
+        @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none;
+      }
+      .btn-primary {
+        @apply bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-all duration-200 shadow-sm hover:shadow;
+      }
+      .btn-secondary {
+        @apply bg-white text-dark border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 transition-all duration-200;
+      }
+      .card {
+        @apply bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden;
+      }
+      .status-message {
+        @apply p-4 rounded-md mb-6 transition-all duration-300;
+      }
+      .status-success {
+        @apply bg-success/10 text-success border border-success/20;
+      }
+      .status-error {
+        @apply bg-danger/10 text-danger border border-danger/20;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-dark min-h-screen">
+  <!-- 顶部导航栏，与应用内其他页面保持一致 -->
+  <header class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <button id="backBtn" class="p-2 rounded hover:bg-gray-100 transition-colors">
+          <i class="fa fa-arrow-left text-secondary"></i>
+        </button>
+        <h1 class="text-lg font-medium">设置远程仓库</h1>
+      </div>
+      <div>
+        <span class="text-sm text-secondary">知识库: <span class="font-medium text-dark" id="repoName">123</span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="container mx-auto px-4 py-6 max-w-2xl">
+    <!-- 说明卡片 -->
+    <div class="card mb-6 p-4 bg-blue-50 border-blue-100">
+      <div class="flex items-start">
+        <i class="fa fa-info-circle text-primary mt-1 mr-3"></i>
+        <div>
+          <h3 class="font-medium text-primary mb-1">远程仓库设置</h3>
+          <p class="text-sm text-gray-600">配置远程Git仓库，实现知识库的备份与同步。设置完成后，您可以将本地内容推送到远程仓库，或从远程仓库拉取更新。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 表单卡片 -->
+    <div class="card mb-6">
+      <div class="p-5 border-b border-gray-100">
+        <h2 class="font-semibold">仓库信息</h2>
+      </div>
+      
+      <form id="repoForm" class="p-5 space-y-5">
+        <!-- 仓库类型选择 -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">仓库类型</label>
+          <div class="flex items-center space-x-4">
+            <label class="inline-flex items-center">
+              <input type="radio" name="repoType" value="github" checked class="text-primary focus:ring-primary">
+              <span class="ml-2">GitHub</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="radio" name="repoType" value="gitlab" class="text-primary focus:ring-primary">
+              <span class="ml-2">GitLab</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="radio" name="repoType" value="gitee" class="text-primary focus:ring-primary">
+              <span class="ml-2">Gitee</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="radio" name="repoType" value="other" class="text-primary focus:ring-primary">
+              <span class="ml-2">其他</span>
+            </label>
+          </div>
+        </div>
+        
+        <!-- 仓库URL -->
+        <div>
+          <label for="repoUrl" class="block text-sm font-medium text-gray-700 mb-1">
+            远程仓库URL <span class="text-danger">*</span>
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fa fa-link text-gray-400"></i>
+            </div>
+            <input 
+              type="url" 
+              id="repoUrl" 
+              placeholder="https://github.com/username/repo.git 或 git@github.com:username/repo.git" 
+              class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md form-input-focus"
+              required
+            >
+          </div>
+          <p class="mt-1 text-xs text-gray-500">支持HTTPS或SSH格式的仓库地址</p>
+        </div>
+        
+        <!-- 分支名称 -->
+        <div>
+          <label for="branch" class="block text-sm font-medium text-gray-700 mb-1">
+            分支名称 <span class="text-danger">*</span>
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fa fa-code-fork text-gray-400"></i>
+            </div>
+            <input 
+              type="text" 
+              id="branch" 
+              placeholder="main 或 master" 
+              value="main"
+              class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md form-input-focus"
+              required
+            >
+          </div>
+        </div>
+        
+        <!-- 认证方式 -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">认证方式</label>
+          <div class="space-y-3">
+            <label class="flex items-start p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer">
+              <input type="radio" name="authType" value="ssh" checked class="mt-1 text-primary focus:ring-primary">
+              <div class="ml-3">
+                <span class="block font-medium">SSH密钥</span>
+                <span class="text-sm text-gray-500">使用SSH密钥进行身份验证（推荐）</span>
+              </div>
+            </label>
+            
+            <label class="flex items-start p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer">
+              <input type="radio" name="authType" value="token" class="mt-1 text-primary focus:ring-primary">
+              <div class="ml-3">
+                <span class="block font-medium">访问令牌</span>
+                <span class="text-sm text-gray-500">使用个人访问令牌（PAT）进行身份验证</span>
+              </div>
+            </label>
+            
+            <label class="flex items-start p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer">
+              <input type="radio" name="authType" value="credential" class="mt-1 text-primary focus:ring-primary">
+              <div class="ml-3">
+                <span class="block font-medium">用户名/密码</span>
+                <span class="text-sm text-gray-500">使用用户名和密码进行身份验证</span>
+              </div>
+            </label>
+          </div>
+        </div>
+        
+        <!-- 令牌/密码输入区域（根据选择的认证方式显示） -->
+        <div id="authDetails" class="hidden">
+          <div id="tokenFields" class="hidden space-y-4">
+            <div>
+              <label for="token" class="block text-sm font-medium text-gray-700 mb-1">访问令牌</label>
+              <input 
+                type="password" 
+                id="token" 
+                placeholder="输入个人访问令牌" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md form-input-focus"
+              >
+            </div>
+          </div>
+          
+          <div id="credentialFields" class="hidden space-y-4">
+            <div>
+              <label for="username" class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+              <input 
+                type="text" 
+                id="username" 
+                placeholder="输入用户名" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md form-input-focus"
+              >
+            </div>
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+              <input 
+                type="password" 
+                id="password" 
+                placeholder="输入密码" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md form-input-focus"
+              >
+            </div>
+          </div>
+        </div>
+        
+        <!-- 同步设置 -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">同步设置</label>
+          <div class="space-y-2">
+            <label class="flex items-center">
+              <input type="checkbox" id="autoPull" class="text-primary focus:ring-primary">
+              <span class="ml-2 text-sm">启动时自动拉取远程更新</span>
+            </label>
+            <label class="flex items-center">
+              <input type="checkbox" id="autoPush" class="text-primary focus:ring-primary">
+              <span class="ml-2 text-sm">编辑后自动推送到远程仓库</span>
+            </label>
+          </div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+          <button type="button" id="testBtn" class="btn-secondary flex items-center">
+            <i class="fa fa-check-circle mr-2"></i>测试连接
+          </button>
+          <button type="button" id="saveBtn" class="btn-primary flex items-center">
+            <i class="fa fa-save mr-2"></i>保存设置
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- 状态提示区域 -->
+    <div id="statusMessage" class="hidden status-message"></div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-white border-t border-gray-200 py-4 mt-8">
+    <div class="container mx-auto px-4 text-center text-sm text-gray-500">
+      <p>远程仓库功能帮助您更好地管理知识库版本和备份</p>
+    </div>
+  </footer>
+
+  <script>
+    // DOM元素引用
+    const authTypeRadios = document.querySelectorAll('input[name="authType"]');
+    const authDetails = document.getElementById('authDetails');
+    const tokenFields = document.getElementById('tokenFields');
+    const credentialFields = document.getElementById('credentialFields');
+    const testBtn = document.getElementById('testBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const backBtn = document.getElementById('backBtn');
+    const statusMessage = document.getElementById('statusMessage');
+    const repoForm = document.getElementById('repoForm');
+    const repoNameEl = document.getElementById('repoName');
+
+    // 模拟从后端获取知识库名称（实际应通过接口或路由参数获取）
+    function fetchRepoName() {
+      // 这里仅为示例，实际需替换为真实逻辑
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve('123');
+        }, 300);
+      });
+    }
+
+    // 初始化知识库名称
+    async function initRepoName() {
+      const name = await fetchRepoName();
+      repoNameEl.textContent = name;
+    }
+
+    // 显示认证方式对应的输入字段
+    function updateAuthFields() {
+      const selectedAuthType = document.querySelector('input[name="authType"]:checked').value;
+      
+      // 隐藏所有认证字段
+      tokenFields.classList.add('hidden');
+      credentialFields.classList.add('hidden');
+      
+      // 根据选择显示对应字段
+      if (selectedAuthType === 'token') {
+        authDetails.classList.remove('hidden');
+        tokenFields.classList.remove('hidden');
+      } else if (selectedAuthType === 'credential') {
+        authDetails.classList.remove('hidden');
+        credentialFields.classList.remove('hidden');
+      } else {
+        // SSH不需要额外字段
+        authDetails.classList.add('hidden');
+      }
+    }
+    
+    // 显示状态消息
+    function showStatus(message, isError = false) {
+      statusMessage.textContent = message;
+      statusMessage.classList.remove('hidden', 'status-success', 'status-error');
+      
+      if (isError) {
+        statusMessage.classList.add('status-error');
+      } else {
+        statusMessage.classList.add('status-success');
+      }
+      
+      // 5秒后自动隐藏成功消息
+      if (!isError) {
+        setTimeout(() => {
+          statusMessage.classList.add('hidden');
+        }, 5000);
+      }
+    }
+    
+    // 测试连接（模拟与后端交互，实际需调用Tauri invoke）
+    async function testConnection() {
+      const repoUrl = document.getElementById('repoUrl').value;
+      
+      if (!repoUrl) {
+        showStatus('请输入远程仓库URL', true);
+        return;
+      }
+      
+      testBtn.disabled = true;
+      testBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>测试中...';
+      
+      try {
+        // 模拟API调用测试连接（实际应替换为：const result = await invoke('verify_remote_repo', { url: repoUrl });）
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        showStatus('连接测试成功！可以正常访问该仓库');
+      } catch (error) {
+        showStatus(`连接测试失败：${error.message || '无法访问该仓库，请检查URL和网络连接'}`, true);
+      } finally {
+        testBtn.disabled = false;
+        testBtn.innerHTML = '<i class="fa fa-check-circle mr-2"></i>测试连接';
+      }
+    }
+    
+    // 保存设置（模拟与后端交互，实际需调用Tauri invoke）
+    async function saveSettings() {
+      // 获取表单数据
+      const formData = {
+        repoType: document.querySelector('input[name="repoType"]:checked').value,
+        repoUrl: document.getElementById('repoUrl').value,
+        branch: document.getElementById('branch').value,
+        authType: document.querySelector('input[name="authType"]:checked').value,
+        autoPull: document.getElementById('autoPull
